@@ -1,7 +1,8 @@
 import express from 'express'
 import bcrypt from 'bcrypt'
-import { User } from '../types'
 import UserModel from '../models/user'
+import { User } from '../types'
+import { createToken } from '../lib/auth'
 
 const router = express.Router()
 
@@ -49,7 +50,8 @@ router.post('/auth/login', async function (req, res) {
     return
   }
 
-  res.json(user)
+  res.header('login', createToken({ ...user }))
+  res.send(201)
 })
 
 export default router
