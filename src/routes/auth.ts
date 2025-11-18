@@ -1,8 +1,10 @@
 import express from 'express'
 import bcrypt from 'bcrypt'
+import { status } from 'http-status'
 import UserModel from '../models/user'
 import { User } from '../types'
 import { createToken } from '../lib/auth'
+import authenticated from '../middleware/authenticated'
 
 const router = express.Router()
 
@@ -50,8 +52,9 @@ router.post('/auth/login', async function (req, res) {
     return
   }
 
-  res.header('login', createToken({ ...user }))
-  res.send(201)
+  const token = createToken({ ...user })
+  res.cookie('login', token)
+  res.send(status.CREATED)
 })
 
 export default router

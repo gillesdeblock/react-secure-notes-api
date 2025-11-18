@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "ts-node-dev --inspect --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js"
   },
@@ -15,6 +15,7 @@
     "express": "~4.16.1",
     "express-joi-validation": "^6.1.0",
     "http-errors": "~1.6.3",
+    "http-status": "^2.1.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.20.0",
