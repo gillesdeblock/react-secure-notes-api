@@ -3,15 +3,16 @@ import jwt, { JsonWebTokenError } from 'jsonwebtoken'
 import status from 'http-status'
 
 export default function authenticated(req: Request, res: Response, next: NextFunction) {
-  const { authorization } = req.headers
+  // const { authorization } = req.headers
+  const token = req.cookies.token
 
-  if (!authorization) {
+  if (!token) {
     res.status(status.FORBIDDEN).send('unauthorized')
     return
   }
 
   try {
-    const token = authorization.replace('Bearer ', '')
+    // const token = token.replace('Bearer ', '')
     jwt.verify(token, 'debug')
     next()
   } catch (e: unknown | JsonWebTokenError) {
@@ -20,6 +21,7 @@ export default function authenticated(req: Request, res: Response, next: NextFun
       return
     }
     res.status(status.UNAUTHORIZED).send(e.message)
+
     return
   }
 }
