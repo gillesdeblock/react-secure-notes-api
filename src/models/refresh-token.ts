@@ -1,12 +1,11 @@
-import { Schema, connection } from 'mongoose'
+import { Schema, model } from 'mongoose'
 import { RefreshToken } from '../types/refresh-token'
 
-export default connection.model(
-  'refreshtokens',
-  new Schema({
-    userId: Schema.ObjectId,
-    hash: String,
-    exp: Number,
-    inactive: Boolean,
-  }),
-)
+export const RefreshTokenSchema = new Schema<RefreshToken>({
+  userId: Schema.ObjectId,
+  hash: String,
+  expiresAt: Date,
+  revokedAt: Date,
+})
+
+export default model<RefreshToken>('RefreshToken', RefreshTokenSchema, 'refreshtokens')

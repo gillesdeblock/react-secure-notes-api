@@ -10,9 +10,11 @@
   "dependencies": {
     "@types/cookie-parser": "^1.4.10",
     "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.0",
     "cookie-parser": "~1.4.4",
+    "cors": "^2.8.5",
     "debug": "~2.6.9",
-    "express": "~4.16.1",
+    "express": "^5.1.0",
     "express-joi-validation": "^6.1.0",
     "http-errors": "~1.6.3",
     "http-status": "^2.1.0",
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.10.1",
