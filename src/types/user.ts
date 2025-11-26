@@ -3,11 +3,13 @@ export type User = {
   email: string
   passwordHash: string
 
-  encryptedMasterKey: string // base64 ciphertext
-  masterKeyIv: string // base64
   kdfSalt: string // base64
-  kdfIterations?: number
+  masterKeyIv: string // base64
+  masterKeyAuthTag: string // base64
+  encryptedMasterKey: string // base64 ciphertext
 
   createdAt?: string
   updatedAt?: string
 }
+
+export type UserDocument = (Partial<User> & { _id: string }) | null

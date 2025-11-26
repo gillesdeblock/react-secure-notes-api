@@ -8,7 +8,7 @@ export default function authenticated(req: Request, res: Response, next: NextFun
   if (!authorization && typeof req.cookies.token === 'string') {
     authorization = req.cookies.token
   } else if (!authorization) {
-    res.status(status.FORBIDDEN).send('unauthorized')
+    res.status(status.UNAUTHORIZED).send('unauthorized')
     return
   }
 

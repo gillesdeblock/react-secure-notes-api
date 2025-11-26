@@ -1,17 +1,18 @@
 import { Schema, model } from 'mongoose'
-import { User } from '../types'
 
-export const UserSchema = new Schema<User>({
-  email: String,
-  passwordHash: String,
+const UserSchema = new Schema({
+  email: { type: String, required: true },
+  passwordHash: { type: String, required: true },
 
-  encryptedMasterKey: String, // base64 ciphertext
-  masterKeyIv: String, // base64
-  kdfSalt: String, // base64
-  kdfIterations: Number,
+  kdfSalt: String,
+  masterKeyIv: String,
+  masterKeyAuthTag: String,
+  encryptedMasterKey: String,
 
   createdAt: Date,
   updatedAt: Date,
 })
 
-export default model<User>('User', UserSchema, 'users')
+const UserModel = model('User', UserSchema, 'users')
+
+export default UserModel

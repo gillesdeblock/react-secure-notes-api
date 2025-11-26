@@ -2,28 +2,24 @@ import express from 'express'
 import jwt from 'jsonwebtoken'
 import UserModel from '../models/user'
 import authenticated from '../middleware/authenticated'
+import { decodeAccessToken } from '../lib/auth'
 
 const router = express.Router()
 
 router.get('/me', authenticated, async function (req, res) {
   try {
-    const decodedToken = jwt.decode(req.cookies.token, { json: true })
-
-    if (!decodedToken?.id) {
-      throw new Error('invalid token')
-    }
-
-    const user = await UserModel.findById(decodedToken.id, {
-      id: '$_id',
-      _id: 0,
-      email: 1,
-    })
+    const decodedToken = decodeAccessToken(req.cookies.token)
+    const user = await UserModel.findById(decodedToken.userId)
 
     if (!user) {
-      throw new Error('user not found')
+      res.status(401).send('No user found')
+      return
     }
 
-    res.send(user)
+    res.send({
+      id: user.id,
+      email: user.email,
+    })
   } catch (error) {
     if (error) {
       console.error(error.toString())
