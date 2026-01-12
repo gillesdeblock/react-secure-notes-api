@@ -29,8 +29,6 @@ app.use(userRouter)
 app.use(noteRouter)
 app.use(connectDb)
 
-console.log(process.env)
-
 app.get('/health', (req, res) => {
   res.json({ ok: true })
 })
