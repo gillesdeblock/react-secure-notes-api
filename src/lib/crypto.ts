@@ -19,7 +19,7 @@ export async function setupUserMasterKeyEncryption(password: string) {
   const kdfSalt = crypto.randomBytes(12)
   const pdk = await derivePasswordKey(password, kdfSalt)
 
-  const masterKey = crypto.randomBytes(12)
+  const masterKey = crypto.randomBytes(32)
   const masterKeyProperties = await encryptMasterKey(masterKey, pdk)
 
   return {

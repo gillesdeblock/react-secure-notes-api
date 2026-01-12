@@ -1,14 +1,21 @@
 import jwt, { JwtPayload } from 'jsonwebtoken'
+import { CookieOptions } from 'express'
+import bcrypt from 'bcrypt'
 import crypto from 'crypto'
 import { hasProperties } from './utils'
+import { AccessTokenPayload } from '../types'
+import RefreshTokenModel from '../models/refresh-token'
 
-interface AccessTokenPayload extends JwtPayload {
-  userId: string
-  masterKey: string
+const ONE_WEEK_MS = 1000 * 60 * 60 * 24 * 7
+
+export const DEFAULT_COOKIE_OPTIONS: CookieOptions = {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none',
 }
 
-export function createAccessToken(payload: Pick<AccessTokenPayload, 'userId' | 'masterKey'>): string {
-  return jwt.sign(payload, 'debug', { expiresIn: 60 * 15 })
+export function createAccessToken(payload: Pick<AccessTokenPayload, 'userId' | 'masterKey'>, expiresIn = 900): string {
+  return jwt.sign(payload, 'debug', { expiresIn })
 }
 
 export function decodeAccessToken(token: string) {
@@ -23,6 +30,26 @@ export function assertAccessTokenPayload(payload: string | JwtPayload): asserts 
   }
 }
 
-export function generateRefreshToken() {
-  return crypto.randomBytes(12)
+export function generateRefreshTokenHash(saltOrRounds: string | number = 10) {
+  return bcrypt.hash(crypto.randomBytes(12), saltOrRounds)
+}
+
+export async function revokeActiveRefreshTokens(userId: string) {
+  return RefreshTokenModel.updateMany(
+    {
+      userId,
+      $or: [{ revokedAt: { $exists: false } }, { revokedAt: null }],
+    },
+    { $set: { revokedAt: new Date() } },
+  )
+}
+
+export async function createRefreshToken(userId: string, date: Date | number = Date.now()) {
+  const time = date instanceof Date ? date.getTime() : date
+  const hash = await generateRefreshTokenHash()
+  return RefreshTokenModel.create({
+    userId,
+    hash,
+    expiresAt: new Date(time + ONE_WEEK_MS),
+  })
 }

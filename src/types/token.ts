@@ -5,3 +5,8 @@ export type RefreshToken = {
   expiresAt?: Date
   revokedAt?: Date
 }
+
+export type AccessTokenPayload = {
+  userId: string
+  masterKey: string
+}

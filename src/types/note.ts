@@ -1,15 +1,24 @@
 export type Note = {
-  _id: string
   userId: string
+  tags: string[]
 
-  encryptedTitle: string // base64
-  encryptedContent: string // base64
-  iv: string // base64
+  iv: string
+  titleAuthTag: string
+  shortAuthTag: string
+  contentAuthTag: string
+  encryptedTitle: string
+  encryptedShort: string
+  encryptedContent: string
 
-  // plaintext metadata
-  updatedAt: string
-  createdAt: string
-  tags: string[] // encrypted or not (design choice)
+  createdAt: Date
+  updatedAt: Date
+}
 
-  version: number // for conflict resolution
+export type NoteDocument = (Partial<Note> & { _id: string }) | null
+
+export type NoteCreatePayload = {
+  title: string
+  short: string
+  content: string
+  tags: string[]
 }

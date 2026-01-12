@@ -1,12 +1,11 @@
-import express from 'express'
-import jwt from 'jsonwebtoken'
+import express, { Request, Response } from 'express'
 import UserModel from '../models/user'
-import authenticated from '../middleware/authenticated'
+import useAccessToken from '../middleware/use-access-token'
 import { decodeAccessToken } from '../lib/auth'
 
 const router = express.Router()
 
-router.get('/me', authenticated, async function (req, res) {
+router.get('/me', useAccessToken(), async function (req: Request, res: Response) {
   try {
     const decodedToken = decodeAccessToken(req.cookies.token)
     const user = await UserModel.findById(decodedToken.userId)
