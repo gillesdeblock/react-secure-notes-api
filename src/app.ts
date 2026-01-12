@@ -8,17 +8,25 @@ import connectDb from './middleware/connect-db'
 
 const app = express()
 
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      const allowed = ['https://secure-notes.gillesdeblock.com', 'http://localhost:5173']
+      if (!origin || allowed.includes(origin)) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
+    credentials: true,
+  }),
+)
+
 app.use(express.json())
 app.use(cookieParser())
 app.use(authRouter)
 app.use(userRouter)
 app.use(noteRouter)
-app.use(
-  cors({
-    origin: '*',
-    credentials: true,
-  }),
-)
 app.use(connectDb)
 
 console.log(process.env)
