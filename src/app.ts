@@ -15,7 +15,7 @@ app.use(userRouter)
 app.use(noteRouter)
 app.use(
   cors({
-    origin: 'https://*.gillesdeblock.com',
+    origin: 'https://secure-notes.gillesdeblock.com',
     credentials: true,
   }),
 )

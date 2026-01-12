@@ -6,7 +6,7 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null }
 }
 
-export async function connectDB(uri: string = 'mongodb+srv://gillesdeblock_db_user:89l0yhaBLJDgokgb@cluster0.id3onim.mongodb.net/') {
+export async function connectDB(uri: string) {
   if (cached.conn) return cached.conn
 
   if (!cached.promise) {
