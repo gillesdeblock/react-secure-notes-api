@@ -2,11 +2,9 @@
   "name": "secure-notes-api",
   "version": "0.0.0",
   "private": true,
-  "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --inspect --respawn --transpile-only src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js"
+    "build": "tsc"
   },
   "dependencies": {
     "@types/cookie-parser": "^1.4.10",
