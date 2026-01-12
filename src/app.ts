@@ -24,10 +24,11 @@ app.use(
 
 app.use(express.json())
 app.use(cookieParser())
+app.use(connectDb)
+
 app.use(authRouter)
 app.use(userRouter)
 app.use(noteRouter)
-app.use(connectDb)
 
 app.get('/health', (req, res) => {
   res.json({ ok: true })
