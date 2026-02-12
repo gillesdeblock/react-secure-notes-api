@@ -9,7 +9,7 @@ export default (verifyOptions?: jwt.VerifyOptions) => (req: Request, res: Respon
       res.status(status.UNAUTHORIZED).send({ message: 'unauthorized' })
       return
     }
-    const payload = jwt.verify(req.cookies.token, 'debug', verifyOptions)
+    const payload = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string, verifyOptions)
     assertAccessTokenPayload(payload)
     req.decodedToken = payload
     next()

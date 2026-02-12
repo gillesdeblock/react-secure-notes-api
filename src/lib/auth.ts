@@ -15,11 +15,11 @@ export const DEFAULT_COOKIE_OPTIONS: CookieOptions = {
 }
 
 export function createAccessToken(payload: Pick<AccessTokenPayload, 'userId' | 'masterKey'>, expiresIn = 900): string {
-  return jwt.sign(payload, 'debug', { expiresIn })
+  return jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn })
 }
 
 export function decodeAccessToken(token: string) {
-  const decodedToken = jwt.verify(token, 'debug')
+  const decodedToken = jwt.verify(token, process.env.JWT_SECRET as string)
   assertAccessTokenPayload(decodedToken)
   return decodedToken
 }
