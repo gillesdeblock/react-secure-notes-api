@@ -51,7 +51,7 @@ router.post('/auth/login', async function (req: Request, res: Response) {
   const refreshToken = await createRefreshToken(user._id, now)
   res.cookie('refresh_token', refreshToken.hash, DEFAULT_COOKIE_OPTIONS)
 
-  res.sendStatus(status.NO_CONTENT)
+  res.status(status.NO_CONTENT).send({ message: 'logged in' })
 })
 
 router.post('/auth/register', async function (req: Request, res: Response) {
@@ -89,9 +89,9 @@ router.post('/auth/register', async function (req: Request, res: Response) {
   res.cookie('refresh_token', refreshToken.hash, DEFAULT_COOKIE_OPTIONS)
 
   if (result.errors) {
-    res.sendStatus(status.INTERNAL_SERVER_ERROR)
+    res.status(status.INTERNAL_SERVER_ERROR).send({ message: 'Internal server error' })
   } else {
-    res.sendStatus(status.CREATED)
+    res.status(status.CREATED).send({ message: 'user created' })
   }
 })
 
