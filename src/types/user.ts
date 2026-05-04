@@ -8,8 +8,8 @@ export type User = {
   masterKeyAuthTag: string // base64
   encryptedMasterKey: string // base64 ciphertext
 
-  createdAt?: string
-  updatedAt?: string
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export type UserDocument = (Partial<User> & { _id: string }) | null

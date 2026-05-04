@@ -1,10 +1,12 @@
 import express from 'express'
+import 'express-async-errors'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import authRouter from './routes/auth'
 import userRouter from './routes/user'
 import noteRouter from './routes/note'
 import connectDb from './middleware/connect-db'
+import errorHandler from './middleware/error-handler'
 
 const app = express()
 
@@ -29,6 +31,7 @@ app.use(connectDb)
 app.use(authRouter)
 app.use(userRouter)
 app.use(noteRouter)
+app.use(errorHandler)
 
 app.get('/health', (req, res) => {
   res.json({ ok: true })

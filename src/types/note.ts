@@ -18,7 +18,7 @@ export type NoteDocument = (Partial<Note> & { _id: string }) | null
 
 export type NoteCreatePayload = {
   title: string
-  short: string
   content: string
-  tags: string[]
+  short?: string
+  tags?: string[]
 }

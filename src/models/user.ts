@@ -4,10 +4,10 @@ const UserSchema = new Schema({
   email: { type: String, required: true },
   passwordHash: { type: String, required: true },
 
-  kdfSalt: String,
-  masterKeyIv: String,
-  masterKeyAuthTag: String,
-  encryptedMasterKey: String,
+  kdfSalt: { type: String, required: true },
+  masterKeyIv: { type: String, required: true },
+  masterKeyAuthTag: { type: String, required: true },
+  encryptedMasterKey: { type: String, required: true },
 
   createdAt: Date,
   updatedAt: Date,

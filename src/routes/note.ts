@@ -1,12 +1,10 @@
 import express, { Request, Response } from 'express'
 import crypto from 'crypto'
 import useAccessToken from '../middleware/use-access-token'
-import { Note, NoteCreatePayload, NoteDocument } from '../types'
+import { Note, NoteCreatePayload, NoteDocument, AuthenticatedRequest } from '../types'
 import { hasProperties } from '../lib/utils'
 import { decryptAesGcm, encryptAesGcm } from '../lib/crypto'
 import NoteModel from '../models/note'
-import status from 'http-status'
-import { sanitizeFilter } from 'mongoose'
 
 const router = express.Router()
 
@@ -15,16 +13,16 @@ router.post('/notes', useAccessToken(), async (req: Request, res: Response) => {
   const valid = hasProperties(payload, 'title', 'content')
 
   if (!valid) {
-    res.status(400).send('Note is invalid, must have a title and content')
+    res.status(400).json({ message: 'Note is invalid, must have a title and content' })
     return
   }
 
-  const { userId, masterKey } = req.decodedToken as NonNullable<express.Request['decodedToken']>
+  const { userId, masterKey } = (req as AuthenticatedRequest).decodedToken
   const now = Date.now()
   const iv = crypto.randomBytes(12)
   const masterKeyBuffer = Buffer.from(masterKey, 'base64')
   const { encrypted: encryptedTitle, authTag: titleAuthTag } = await encryptAesGcm(Buffer.from(payload.title), masterKeyBuffer, iv)
-  const { encrypted: encryptedShort, authTag: shortAuthTag } = await encryptAesGcm(Buffer.from(payload.short), masterKeyBuffer, iv)
+  const { encrypted: encryptedShort, authTag: shortAuthTag } = await encryptAesGcm(Buffer.from(payload.short || ''), masterKeyBuffer, iv)
   const { encrypted: encryptedContent, authTag: contentAuthTag } = await encryptAesGcm(Buffer.from(payload.content), masterKeyBuffer, iv)
 
   const note: Note = {
@@ -45,28 +43,24 @@ router.post('/notes', useAccessToken(), async (req: Request, res: Response) => {
 
   const result = await NoteModel.create(note)
 
-  if (result.errors) {
-    res.status(500).send('unexpected error')
-  } else {
-    res.status(203).send({
-      id: result._id,
-      title: payload.title,
-      short: payload.short,
-      content: payload.content,
-      createdAt: note.createdAt,
-      updatedAt: note.updatedAt,
-    })
-  }
+  res.status(201).json({
+    id: result._id,
+    title: payload.title,
+    short: payload.short,
+    content: payload.content,
+    createdAt: note.createdAt,
+    updatedAt: note.updatedAt,
+  })
 })
 
 router.get('/notes', useAccessToken(), async (req: Request, res: Response) => {
-  const { userId, masterKey } = req.decodedToken as NonNullable<typeof req.decodedToken>
+  const { userId, masterKey } = (req as AuthenticatedRequest).decodedToken
 
   const notes: NoteDocument[] = await NoteModel.find({ userId })
   const decipherKey = Buffer.from(masterKey, 'base64')
 
   if (!notes?.length) {
-    res.send([])
+    res.json([])
     return
   }
 
@@ -108,20 +102,20 @@ router.get('/notes', useAccessToken(), async (req: Request, res: Response) => {
 
   const decryptedNotes = await Promise.all(notes.map(decryptNote))
 
-  res.send(decryptedNotes)
+  res.json(decryptedNotes)
 })
 
 router.get('/notes/:id', useAccessToken(), async (req: Request, res: Response) => {
-  const { userId, masterKey } = req.decodedToken as NonNullable<typeof req.decodedToken>
+  const { userId, masterKey } = (req as AuthenticatedRequest).decodedToken
 
   const note: NoteDocument = await NoteModel.findById(req.params.id)
 
   if (!note) {
-    res.sendStatus(404)
+    res.status(404).json({ message: 'note not found' })
     return
   }
   if (note.userId !== userId) {
-    res.sendStatus(403)
+    res.status(403).json({ message: 'forbidden' })
     return
   }
 
@@ -139,7 +133,7 @@ router.get('/notes/:id', useAccessToken(), async (req: Request, res: Response) =
   const shortDecryption = await decrypt(note.encryptedShort, note.shortAuthTag)
   const contentDecryption = await decrypt(note.encryptedContent, note.contentAuthTag)
 
-  res.send({
+  res.json({
     id: note._id,
     tags: note.tags || [],
     title: titleDecryption?.toString(),
@@ -155,17 +149,17 @@ router.put('/notes/:id', useAccessToken(), async (req: Request, res: Response) =
   const valid = hasProperties(payload, 'title', 'content')
 
   if (!valid) {
-    res.status(400).send('Note is invalid, must have a title and content')
+    res.status(400).json({ message: 'Note is invalid, must have a title and content' })
     return
   }
 
-  const { userId, masterKey } = req.decodedToken as NonNullable<express.Request['decodedToken']>
+  const { userId, masterKey } = (req as AuthenticatedRequest).decodedToken
   const now = Date.now()
 
   const masterKeyBuffer = Buffer.from(masterKey, 'base64')
   const iv = crypto.randomBytes(12)
   const { encrypted: encryptedTitle, authTag: titleAuthTag } = await encryptAesGcm(Buffer.from(payload.title), masterKeyBuffer, iv)
-  const { encrypted: encryptedShort, authTag: shortAuthTag } = await encryptAesGcm(Buffer.from(payload.short), masterKeyBuffer, iv)
+  const { encrypted: encryptedShort, authTag: shortAuthTag } = await encryptAesGcm(Buffer.from(payload.short || ''), masterKeyBuffer, iv)
   const { encrypted: encryptedContent, authTag: contentAuthTag } = await encryptAesGcm(Buffer.from(payload.content), masterKeyBuffer, iv)
 
   const result = await NoteModel.findOneAndUpdate({ userId, _id: req.params.id }, {
@@ -179,49 +173,45 @@ router.put('/notes/:id', useAccessToken(), async (req: Request, res: Response) =
     updatedAt: new Date(now),
   } as Partial<Note>)
 
-  if (!result || result.errors) {
-    res.status(500).send('unexpected error')
-  } else {
-    res.status(203).send({
-      id: result._id,
-      title: payload.title,
-      short: payload.short,
-      content: payload.content,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
-    })
-  }
+  res.status(200).json({
+    id: result?._id,
+    title: payload.title,
+    short: payload.short,
+    content: payload.content,
+    createdAt: result?.createdAt,
+    updatedAt: result?.updatedAt,
+  })
 })
 
 router.delete('/notes/:id', useAccessToken(), async (req: Request, res: Response) => {
-  const { userId } = req.decodedToken as NonNullable<typeof req.decodedToken>
+  const { userId } = (req as AuthenticatedRequest).decodedToken
 
   const note: NoteDocument = await NoteModel.findById(req.params.id)
 
   if (!note) {
-    res.sendStatus(404)
+    res.status(404).json({ message: 'note not found' })
     return
   }
   if (note.userId !== userId) {
-    res.sendStatus(403)
+    res.status(403).json({ message: 'forbidden' })
     return
   }
 
   await NoteModel.deleteOne({ _id: note._id })
-  res.sendStatus(status.NO_CONTENT)
+  res.json({})
 })
 
 router.post('/notes/batch-remove', useAccessToken(), async (req: Request, res: Response) => {
-  const { userId } = req.decodedToken as NonNullable<typeof req.decodedToken>
+  const { userId } = (req as AuthenticatedRequest).decodedToken
+  const ids: string[] = req.body.ids || []
 
-  const { deletedCount } = await NoteModel.deleteMany(
-    sanitizeFilter({
-      userId,
-      _id: req.body.ids || [],
-    }),
-  )
+  if (!ids.length) {
+    res.status(200).json({ deleted: 0 })
+    return
+  }
 
-  res.status(status.OK).send({ deleted: deletedCount })
+  const { deletedCount } = await NoteModel.deleteMany({ userId, _id: ids })
+  res.status(200).json({ deleted: deletedCount })
 })
 
 export default router

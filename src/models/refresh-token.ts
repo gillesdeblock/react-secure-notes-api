@@ -1,9 +1,9 @@
 import { Schema, model } from 'mongoose'
 
 export const RefreshTokenSchema = new Schema({
-  userId: Schema.ObjectId,
+  userId: { type: Schema.ObjectId },
 
-  hash: String,
+  hash: { type: String, required: true },
   expiresAt: Date,
   revokedAt: Date,
 })
