@@ -22,7 +22,7 @@ Pairs with the [react-secure-notes](https://github.com/gillesdeblock/react-secur
 - **End-to-end encryption** — note content is encrypted with AES-256-GCM using a per-user master key before being stored in MongoDB
 - **Password-based key derivation** — master keys are derived from the user's password using Argon2id (OWASP-recommended), so only the user can decrypt their own notes
 - **JWT authentication** — short-lived access tokens (15 min) embedded in HTTP-only cookies
-- **Refresh token rotation** — long-lived refresh tokens (7 days) are rotated on every use and fully revoked on logout, preventing token reuse attacks
+- **Self-contained refresh tokens** — long-lived refresh tokens (7 days) are self-contained JWTs embedding the encrypted master key, enabling stateless refresh without requiring the access token. Rotated on every use and fully revoked on logout, preventing token reuse attacks
 - **Input validation** — all endpoints validated with Joi schemas via `express-joi-validation`
 - **Global async error handling** — powered by `express-async-errors`, with structured error responses for validation failures, duplicate keys, and unexpected errors
 - **TypeScript strict mode** — fully typed codebase with no implicit `any`
@@ -36,7 +36,7 @@ Pairs with the [react-secure-notes](https://github.com/gillesdeblock/react-secur
 | Runtime | Node.js + TypeScript |
 | Framework | Express.js |
 | Database | MongoDB + Mongoose |
-| Auth | JWT (`jsonwebtoken`) + Argon2id + bcrypt |
+| Auth | JWT (`jsonwebtoken`) + Argon2id |
 | Encryption | AES-256-GCM (Node.js built-in `crypto`) |
 | Validation | Joi + `express-joi-validation` |
 
@@ -49,7 +49,7 @@ Authentication and encryption are layered to ensure the server never has access 
 1. **Registration** — a random master key is generated for the user. It is encrypted with a key derived from their password (Argon2id KDF + AES-256-GCM) and stored in that encrypted form.
 2. **Login** — the password is used to re-derive the decryption key, which decrypts the master key. The master key is embedded in the signed JWT access token so subsequent requests can decrypt notes without re-asking for the password.
 3. **Notes** — each note's title and content are individually encrypted with AES-256-GCM using the user's master key and a random 12-byte IV. GCM authentication tags prevent silent data tampering.
-4. **Refresh tokens** — stored as bcrypt hashes in MongoDB. On each refresh the old token is revoked and a new one is issued (rotation). Logout revokes all active tokens for the user.
+4. **Refresh tokens** — self-contained JWTs that embed the master key (encrypted with AES-256-GCM using the JWT secret). Stored in MongoDB with metadata (expiration, revocation status). The refresh endpoint verifies the JWT signature and revocation status without requiring an Authorization header. On each refresh the old token is revoked and a new one is issued (rotation). Logout revokes all active tokens for the user.
 
 ---
 
