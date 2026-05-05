@@ -4,11 +4,14 @@ import { assertAccessTokenPayload } from '../lib/auth'
 
 export default (verifyOptions?: jwt.VerifyOptions) => (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.cookies.token) {
+    const authHeader = req.headers.authorization
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
+
+    if (!token) {
       res.status(401).json({ message: 'unauthorized' })
       return
     }
-    const payload = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string, verifyOptions)
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string, verifyOptions)
     assertAccessTokenPayload(payload)
     req.decodedToken = payload
     next()

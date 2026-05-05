@@ -46,12 +46,11 @@ router.post('/auth/login', async function (req: Request, res: Response) {
 
   const masterKey = await decodeUserMasterKey(user, credentials.password)
   const token = createAccessToken({ userId, masterKey })
-  res.cookie('token', token, DEFAULT_COOKIE_OPTIONS)
 
   const refreshToken = await createRefreshToken(userId, now)
   res.cookie('refresh_token', refreshToken.hash, DEFAULT_COOKIE_OPTIONS)
 
-  res.status(200).json({ message: 'logged in' })
+  res.status(200).json({ message: 'logged in', accessToken: token })
 })
 
 router.post('/auth/register', async function (req: Request, res: Response) {
@@ -84,11 +83,10 @@ router.post('/auth/register', async function (req: Request, res: Response) {
 
   const userId = result._id.toString()
   const token = createAccessToken({ userId, masterKey })
-  res.cookie('token', token, DEFAULT_COOKIE_OPTIONS)
 
   const refreshToken = await createRefreshToken(userId, now)
   res.cookie('refresh_token', refreshToken.hash, DEFAULT_COOKIE_OPTIONS)
-  res.status(201).json({ message: 'user created' })
+  res.status(201).json({ message: 'user created', accessToken: token })
 })
 
 router.post('/auth/refresh', useAccessToken({ ignoreExpiration: true }), async function (req: Request, res: Response) {
@@ -115,18 +113,16 @@ router.post('/auth/refresh', useAccessToken({ ignoreExpiration: true }), async f
   await revokeActiveRefreshTokens(userId)
 
   const token = createAccessToken({ userId, masterKey })
-  res.cookie('token', token, DEFAULT_COOKIE_OPTIONS)
 
   const newRefreshToken = await createRefreshToken(userId, now)
   res.cookie('refresh_token', newRefreshToken.hash, DEFAULT_COOKIE_OPTIONS)
 
-  res.json({})
+  res.json({ accessToken: token })
 })
 
 router.post('/auth/logout', useAccessToken(), async function (req: Request, res: Response) {
   const { userId } = (req as AuthenticatedRequest).decodedToken
 
-  res.clearCookie('token')
   res.clearCookie('refresh_token')
 
   await revokeActiveRefreshTokens(userId)
