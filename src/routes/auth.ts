@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express'
 import { UserDocument, AuthenticatedRequest } from '../types'
 import UserModel from '../models/user'
 import RefreshTokenModel from '../models/refresh-token'
-import { createAccessToken, createRefreshToken, decodeAccessToken, DEFAULT_COOKIE_OPTIONS, revokeActiveRefreshTokens } from '../lib/auth'
+import { createAccessToken, createRefreshToken, DEFAULT_COOKIE_OPTIONS, revokeActiveRefreshTokens, decodeAndGetMasterKeyFromRefreshToken } from '../lib/auth'
 import { encryptPassword, setupUserMasterKeyEncryption, verifyPassword, decodeUserMasterKey } from '../lib/crypto'
 import { hasProperties, sanitizeObjectForDb } from '../lib/utils'
 import useAccessToken from '../middleware/use-access-token'
@@ -47,10 +47,10 @@ router.post('/auth/login', async function (req: Request, res: Response) {
   const masterKey = await decodeUserMasterKey(user, credentials.password)
   const token = createAccessToken({ userId, masterKey })
 
-  const refreshToken = await createRefreshToken(userId, now)
-  res.cookie('refresh_token', refreshToken.hash, DEFAULT_COOKIE_OPTIONS)
+  const refreshToken = await createRefreshToken(userId, masterKey, now)
+  res.cookie('refresh_token', refreshToken, DEFAULT_COOKIE_OPTIONS)
 
-  res.status(200).json({ message: 'logged in', accessToken: token })
+  res.status(200).json({ accessToken: token })
 })
 
 router.post('/auth/register', async function (req: Request, res: Response) {
@@ -84,40 +84,62 @@ router.post('/auth/register', async function (req: Request, res: Response) {
   const userId = result._id.toString()
   const token = createAccessToken({ userId, masterKey })
 
-  const refreshToken = await createRefreshToken(userId, now)
-  res.cookie('refresh_token', refreshToken.hash, DEFAULT_COOKIE_OPTIONS)
-  res.status(201).json({ message: 'user created', accessToken: token })
+  const refreshToken = await createRefreshToken(userId, masterKey, now)
+  res.cookie('refresh_token', refreshToken, DEFAULT_COOKIE_OPTIONS)
+  res.status(201).json({ accessToken: token })
 })
 
-router.post('/auth/refresh', useAccessToken({ ignoreExpiration: true }), async function (req: Request, res: Response) {
-  const refreshToken = await RefreshTokenModel.findOne({ hash: req.cookies.refresh_token })
+router.post('/auth/refresh', async function (req: Request, res: Response) {
+  const refreshTokenFromCookie = req.cookies.refresh_token
+  if (!refreshTokenFromCookie) {
+    res.status(401).json({ message: 'refresh_token missing' })
+    return
+  }
 
-  if (!refreshToken || !refreshToken.userId) {
-    console.warn(`unrecognized refresh_token ${req.cookies.refresh_token}`)
+  if (!refreshTokenFromCookie.includes('.')) {
+    console.warn('refresh_token does not appear to be a JWT (old format token)')
     res.status(401).json({ message: 'refresh_token invalid' })
     return
   }
-  if (refreshToken.expiresAt && refreshToken.expiresAt < new Date()) {
-    console.warn(`expired refresh_token ${req.cookies.refresh_token}`)
+
+  const refreshTokenDoc = await RefreshTokenModel.findOne({ hash: refreshTokenFromCookie })
+  if (!refreshTokenDoc || !refreshTokenDoc.userId) {
+    console.warn(`unrecognized refresh_token`)
+    res.status(401).json({ message: 'refresh_token invalid' })
+    return
+  }
+  if (refreshTokenDoc.expiresAt && refreshTokenDoc.expiresAt < new Date()) {
+    console.warn(`expired refresh_token`)
     res.status(401).json({ message: 'refresh_token expired' })
     return
   }
-  if (refreshToken.revokedAt) {
-    console.warn(`revoked refresh_token ${req.cookies.refresh_token}`)
+  if (refreshTokenDoc.revokedAt) {
+    console.warn(`revoked refresh_token`)
     res.status(401).json({ message: 'refresh_token revoked' })
     return
   }
 
-  const now = Date.now()
-  const { userId, masterKey } = (req as AuthenticatedRequest).decodedToken
-  await revokeActiveRefreshTokens(userId)
+  let userId: string
+  let masterKey: string
+  try {
+    const decoded = await decodeAndGetMasterKeyFromRefreshToken(refreshTokenFromCookie)
+    userId = decoded.userId
+    masterKey = decoded.masterKey
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'unknown error'
+    console.warn(`failed to decode refresh_token: ${errorMsg}`)
+    res.status(401).json({ message: 'refresh_token invalid' })
+    return
+  }
 
+  const now = Date.now()
+  await revokeActiveRefreshTokens(userId)
   const token = createAccessToken({ userId, masterKey })
 
-  const newRefreshToken = await createRefreshToken(userId, now)
-  res.cookie('refresh_token', newRefreshToken.hash, DEFAULT_COOKIE_OPTIONS)
+  const newRefreshToken = await createRefreshToken(userId, masterKey, now)
+  res.cookie('refresh_token', newRefreshToken, DEFAULT_COOKIE_OPTIONS)
 
-  res.json({ accessToken: token })
+  res.status(200).json({ accessToken: token })
 })
 
 router.post('/auth/logout', useAccessToken(), async function (req: Request, res: Response) {
