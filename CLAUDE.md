@@ -26,8 +26,8 @@ The API implements a multi-layer authentication system:
 
 1. **User Registration/Login**: Passwords hashed with argon2, credentials validated before token creation
 2. **Access Token (JWT)**: Short-lived (900s default), includes `userId` and `masterKey`
-3. **Refresh Token**: Long-lived (7 days), hashed with bcrypt and stored in MongoDB for validation/revocation
-4. **Master Key Encryption**: Each user has a master key derived from their password using argon2 KDF, encrypted with AES-GCM and stored in the database
+3. **Refresh Token (JWT)**: Long-lived (7 days), self-contained JWT that includes encrypted `masterKey`, stored in MongoDB for validation/revocation
+4. **Master Key Encryption**: Each user has a master key derived from their password using argon2 KDF. Encrypted with AES-GCM using the user's password in the database. Also embedded (encrypted with JWT_SECRET) in refresh tokens for self-contained token flow.
 
 Key files:
 
@@ -46,7 +46,7 @@ Routes are organized by resource in [`src/routes/`](src/routes/):
 ### Middleware
 
 - [`connect-db.ts`](src/middleware/connect-db.ts): MongoDB connection initialization
-- [`use-access-token.ts`](src/middleware/use-access-token.ts): JWT verification (configurable to ignore expiration for refresh flow)
+- [`use-access-token.ts`](src/middleware/use-access-token.ts): JWT verification for protected endpoints (extracts `decodedToken` from Authorization header). **Not used on POST /auth/refresh** — refresh endpoint is self-contained and decodes the refresh token JWT directly.
 - [`error-handler.ts`](src/middleware/error-handler.ts): Global Express error handler — catches Mongoose validation errors, cast errors, duplicate key errors (11000), and unexpected errors; registered last in [`src/app.ts`](src/app.ts). Enabled by `express-async-errors` (imported at the top of `app.ts`), which patches async route handlers to forward thrown errors to this handler automatically.
 
 ### Data Models
@@ -80,9 +80,19 @@ TypeScript types in [`src/types/`](src/types/):
 
 Contains `userId` and `masterKey` (base64-encoded). The `masterKey` is derived from the user's password and encrypted in the database; it's sent in the JWT so the client can decrypt user data without re-asking for the password.
 
-### Refresh Token Rotation
+### Refresh Token Flow
 
-On every refresh, the previous refresh token is revoked (marked with `revokedAt`). This prevents token reuse and limits the blast radius of token leakage.
+The refresh endpoint (`POST /auth/refresh`) is **self-contained** and does not require an Authorization header:
+
+1. Client sends refresh token from httpOnly cookie (no Authorization header needed)
+2. Server validates the refresh token:
+   - Verifies JWT signature with `JWT_SECRET`
+   - Checks expiration date in the database
+   - Checks revocation status in the database
+3. Server extracts `userId` and `masterKey` directly from the refresh token JWT
+4. Server creates a new access token and new refresh token, revokes the old refresh token
+
+**Token rotation:** On every refresh, the previous refresh token is revoked (marked with `revokedAt`). This prevents token reuse and limits the blast radius of token leakage. The new refresh token is a fresh JWT with a new IV and auth tag for the encrypted masterKey.
 
 ### CORS Configuration
 
