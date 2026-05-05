@@ -41,13 +41,14 @@ router.post('/auth/login', async function (req: Request, res: Response) {
   }
 
   const now = Date.now()
-  await RefreshTokenModel.updateMany({ userId: user._id }, { $set: { revokedAt: new Date(now) } })
+  const userId = user._id.toString()
+  await RefreshTokenModel.updateMany({ userId }, { $set: { revokedAt: new Date(now) } })
 
   const masterKey = await decodeUserMasterKey(user, credentials.password)
-  const token = createAccessToken({ userId: user._id, masterKey })
+  const token = createAccessToken({ userId, masterKey })
   res.cookie('token', token, DEFAULT_COOKIE_OPTIONS)
 
-  const refreshToken = await createRefreshToken(user._id, now)
+  const refreshToken = await createRefreshToken(userId, now)
   res.cookie('refresh_token', refreshToken.hash, DEFAULT_COOKIE_OPTIONS)
 
   res.status(200).json({ message: 'logged in' })
@@ -81,10 +82,11 @@ router.post('/auth/register', async function (req: Request, res: Response) {
     updatedAt: new Date(now),
   })
 
-  const token = createAccessToken({ userId: result._id.toString(), masterKey })
+  const userId = result._id.toString()
+  const token = createAccessToken({ userId, masterKey })
   res.cookie('token', token, DEFAULT_COOKIE_OPTIONS)
 
-  const refreshToken = await createRefreshToken(result._id.toString(), new Date(now))
+  const refreshToken = await createRefreshToken(userId, now)
   res.cookie('refresh_token', refreshToken.hash, DEFAULT_COOKIE_OPTIONS)
   res.status(201).json({ message: 'user created' })
 })
@@ -121,12 +123,12 @@ router.post('/auth/refresh', useAccessToken({ ignoreExpiration: true }), async f
   res.json({})
 })
 
-router.post('/auth/logout', async function (req: Request, res: Response) {
-  const token = req.cookies.token
+router.post('/auth/logout', useAccessToken(), async function (req: Request, res: Response) {
+  const { userId } = (req as AuthenticatedRequest).decodedToken
+
   res.clearCookie('token')
   res.clearCookie('refresh_token')
 
-  const { userId } = decodeAccessToken(token)
   await revokeActiveRefreshTokens(userId)
   res.json({})
 })
