@@ -27,7 +27,7 @@ describe('security: token revocation', () => {
 
     accessToken = registerResponse.body.accessToken;
 
-    const cookies = registerResponse.headers['set-cookie'];
+    const cookies = registerResponse.headers['set-cookie'] as unknown as string[] | undefined;
     refreshToken = cookies
       ?.find((c: string) => c.startsWith('refresh_token='))
       ?.split('=')[1]

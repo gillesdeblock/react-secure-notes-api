@@ -84,7 +84,7 @@ describe('integration: auth flow', () => {
         password: testPassword,
       });
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[] | undefined;
       expect(cookies).toBeDefined();
       const refreshTokenCookie = cookies?.find((c: string) => c.startsWith('refresh_token='));
       expect(refreshTokenCookie).toBeDefined();
@@ -182,7 +182,7 @@ describe('integration: auth flow', () => {
         password: testPassword,
       });
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[] | undefined;
       expect(cookies).toBeDefined();
       const refreshTokenCookie = cookies?.find((c: string) => c.startsWith('refresh_token='));
       expect(refreshTokenCookie).toBeDefined();
@@ -213,7 +213,7 @@ describe('integration: auth flow', () => {
         password: testPassword,
       });
 
-      const cookies1 = response1.headers['set-cookie'];
+      const cookies1 = response1.headers['set-cookie'] as unknown as string[] | undefined;
       const refreshToken1 = cookies1
         ?.find((c: string) => c.startsWith('refresh_token='))
         ?.split('=')[1]
@@ -245,7 +245,7 @@ describe('integration: auth flow', () => {
         password: testPassword,
       });
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[] | undefined;
       refreshToken = cookies
         ?.find((c: string) => c.startsWith('refresh_token='))
         ?.split('=')[1]
@@ -282,7 +282,7 @@ describe('integration: auth flow', () => {
         .post('/auth/refresh')
         .set('Cookie', `refresh_token=${refreshToken}`);
 
-      const newCookies = response.headers['set-cookie'];
+      const newCookies = response.headers['set-cookie'] as unknown as string[] | undefined;
       const newRefreshToken = newCookies
         ?.find((c: string) => c.startsWith('refresh_token='))
         ?.split('=')[1]
@@ -329,7 +329,7 @@ describe('integration: auth flow', () => {
         .post('/auth/refresh')
         .set('Cookie', `refresh_token=${refreshToken}`);
 
-      const newCookies = response1.headers['set-cookie'];
+      const newCookies = response1.headers['set-cookie'] as unknown as string[] | undefined;
       const newRefreshToken = newCookies
         ?.find((c: string) => c.startsWith('refresh_token='))
         ?.split('=')[1]
@@ -370,7 +370,7 @@ describe('integration: auth flow', () => {
         .post('/auth/logout')
         .set('Authorization', `Bearer ${accessToken}`);
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[] | undefined;
       const clearCookie = cookies?.find((c: string) => c.startsWith('refresh_token='));
       expect(clearCookie).toBeDefined();
       expect(clearCookie).toContain('Expires=Thu, 01 Jan 1970');
@@ -383,7 +383,7 @@ describe('integration: auth flow', () => {
         password: testPassword,
       });
 
-      const cookies = registerResponse.headers['set-cookie'];
+      const cookies = registerResponse.headers['set-cookie'] as unknown as string[] | undefined;
       const refreshToken = cookies
         ?.find((c: string) => c.startsWith('refresh_token='))
         ?.split('=')[1]

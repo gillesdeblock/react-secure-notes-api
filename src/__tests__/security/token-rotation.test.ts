@@ -26,7 +26,7 @@ describe('security: token rotation', () => {
       password: testPassword,
     });
 
-    const cookies = registerResponse.headers['set-cookie'];
+    const cookies = registerResponse.headers['set-cookie'] as unknown as string[] | undefined;
     refreshToken = cookies
       ?.find((c: string) => c.startsWith('refresh_token='))
       ?.split('=')[1]
@@ -59,7 +59,7 @@ describe('security: token rotation', () => {
         .set('Cookie', `refresh_token=${refreshToken}`);
 
       expect(firstRefresh.status).toBe(200);
-      newRefreshToken = firstRefresh.headers['set-cookie']
+      newRefreshToken = (firstRefresh.headers['set-cookie'] as unknown as string[] | undefined)
         ?.find((c: string) => c.startsWith('refresh_token='))
         ?.split('=')[1]
         ?.split(';')[0] || '';
@@ -79,7 +79,7 @@ describe('security: token rotation', () => {
         .post('/auth/refresh')
         .set('Cookie', `refresh_token=${refreshToken}`);
 
-      const newCookies = firstRefresh.headers['set-cookie'];
+      const newCookies = firstRefresh.headers['set-cookie'] as unknown as string[] | undefined;
       newRefreshToken = newCookies
         ?.find((c: string) => c.startsWith('refresh_token='))
         ?.split('=')[1]
@@ -118,7 +118,7 @@ describe('security: token rotation', () => {
           .post('/auth/refresh')
           .set('Cookie', `refresh_token=${tokens[tokens.length - 1]}`);
 
-        const newCookies = refreshResponse.headers['set-cookie'];
+        const newCookies = refreshResponse.headers['set-cookie'] as unknown as string[] | undefined;
         const newToken = newCookies
           ?.find((c: string) => c.startsWith('refresh_token='))
           ?.split('=')[1]
@@ -156,7 +156,7 @@ describe('security: token rotation', () => {
       const oldAccessToken = initialResponse.body.accessToken;
 
       // Refresh to get new tokens
-      const cookies = initialResponse.headers['set-cookie'];
+      const cookies = initialResponse.headers['set-cookie'] as unknown as string[] | undefined;
       const refreshToken2 = cookies
         ?.find((c: string) => c.startsWith('refresh_token='))
         ?.split('=')[1]
@@ -183,7 +183,7 @@ describe('security: token rotation', () => {
       });
 
       const oldAccessToken = registerResponse.body.accessToken;
-      const cookies = registerResponse.headers['set-cookie'];
+      const cookies = registerResponse.headers['set-cookie'] as unknown as string[] | undefined;
       const oldRefreshToken = cookies
         ?.find((c: string) => c.startsWith('refresh_token='))
         ?.split('=')[1]
@@ -234,7 +234,7 @@ describe('security: token rotation', () => {
           .post('/auth/refresh')
           .set('Cookie', `refresh_token=${tokens[tokens.length - 1]}`);
 
-        const newCookies = refreshResponse.headers['set-cookie'];
+        const newCookies = refreshResponse.headers['set-cookie'] as unknown as string[] | undefined;
         const newToken = newCookies
           ?.find((c: string) => c.startsWith('refresh_token='))
           ?.split('=')[1]
@@ -268,7 +268,7 @@ describe('security: token rotation', () => {
         .post('/auth/refresh')
         .set('Cookie', `refresh_token=${refreshToken}`);
 
-      const newCookies = firstRefresh.headers['set-cookie'];
+      const newCookies = firstRefresh.headers['set-cookie'] as unknown as string[] | undefined;
       const newToken = newCookies
         ?.find((c: string) => c.startsWith('refresh_token='))
         ?.split('=')[1]

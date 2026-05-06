@@ -83,7 +83,7 @@ describe('middleware: use-access-token', () => {
       const token = jwt.sign(payload, process.env.JWT_SECRET as string);
       req.headers = { authorization: `Bearer ${token}` };
 
-      const verifyOptions = { algorithms: ['HS256'] as const };
+      const verifyOptions = { algorithms: ['HS256'] as jwt.Algorithm[] };
       const middleware = useAccessToken(verifyOptions);
       middleware(req as Request, res as Response, next);
 

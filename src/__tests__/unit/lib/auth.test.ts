@@ -34,7 +34,7 @@ describe('auth', () => {
     it('should create token with correct default expiration (900s)', () => {
       const payload = { userId: '123', masterKey: 'base64encodedkey' };
       const token = createAccessToken(payload);
-      const decoded = jwt.decode(token, { complete: true });
+      const decoded = jwt.decode(token, { complete: true }) as any;
 
       expect(decoded?.payload.exp).toBeDefined();
       expect(decoded?.payload.iat).toBeDefined();
@@ -46,7 +46,7 @@ describe('auth', () => {
       const payload = { userId: '123', masterKey: 'base64encodedkey' };
       const customExpiresIn = 3600;
       const token = createAccessToken(payload, customExpiresIn);
-      const decoded = jwt.decode(token, { complete: true });
+      const decoded = jwt.decode(token, { complete: true }) as any;
 
       const expiresIn = (decoded?.payload.exp as number) - (decoded?.payload.iat as number);
       expect(expiresIn).toBe(customExpiresIn);

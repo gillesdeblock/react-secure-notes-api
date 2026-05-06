@@ -113,7 +113,7 @@ describe('security: master key security', () => {
         password: testPassword,
       });
 
-      const cookies = registerResponse.headers['set-cookie'];
+      const cookies = registerResponse.headers['set-cookie'] as unknown as string[] | undefined;
       const refreshToken = cookies
         ?.find((c: string) => c.startsWith('refresh_token='))
         ?.split('=')[1]
@@ -133,7 +133,7 @@ describe('security: master key security', () => {
         password: testPassword,
       });
 
-      const cookies = registerResponse.headers['set-cookie'];
+      const cookies = registerResponse.headers['set-cookie'] as unknown as string[] | undefined;
       const refreshTokenCookie = cookies?.find((c: string) => c.startsWith('refresh_token='));
 
       // Should be httpOnly to prevent XSS attacks
@@ -147,7 +147,7 @@ describe('security: master key security', () => {
         password: testPassword,
       });
 
-      const cookies = registerResponse.headers['set-cookie'];
+      const cookies = registerResponse.headers['set-cookie'] as unknown as string[] | undefined;
       const refreshTokenCookie = cookies?.find((c: string) => c.startsWith('refresh_token='));
 
       expect(refreshTokenCookie).toContain('Secure');
@@ -261,10 +261,10 @@ describe('security: master key security', () => {
 
       // User1 cannot decrypt User2's master key
       const user2Doc = {
-        kdfSalt: user2?.kdfSalt?.toString('base64'),
-        encryptedMasterKey: user2?.encryptedMasterKey?.toString('base64'),
-        masterKeyIv: user2?.masterKeyIv?.toString('base64'),
-        masterKeyAuthTag: user2?.masterKeyAuthTag?.toString('base64'),
+        kdfSalt: (user2?.kdfSalt as Buffer | undefined)?.toString('base64'),
+        encryptedMasterKey: (user2?.encryptedMasterKey as Buffer | undefined)?.toString('base64'),
+        masterKeyIv: (user2?.masterKeyIv as Buffer | undefined)?.toString('base64'),
+        masterKeyAuthTag: (user2?.masterKeyAuthTag as Buffer | undefined)?.toString('base64'),
       };
 
       await expect(decodeUserMasterKey(user2Doc, 'password1')).rejects.toThrow();
