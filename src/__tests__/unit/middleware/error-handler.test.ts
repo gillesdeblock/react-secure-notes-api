@@ -207,18 +207,18 @@ describe('middleware: error-handler', () => {
     });
 
     it('should handle plain object errors', () => {
-      const error = { message: 'Some error' };
+      const error = new Error('Some error');
 
-      errorHandler(error, req as Request, res as Response, next);
+      errorHandler(error as any, req as Request, res as Response, next);
 
       const response = jsonMock.mock.calls[0][0];
       expect(response.message).toBe('unexpected error');
     });
 
     it('should handle errors without message property', () => {
-      const error = {};
+      const error = new Error();
 
-      errorHandler(error, req as Request, res as Response, next);
+      errorHandler(error as any, req as Request, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(500);
     });
