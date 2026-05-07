@@ -236,7 +236,6 @@ describe('auth', () => {
 
     it('should throw error for expired refresh token', async () => {
       const userId = '123';
-      const masterKey = 'base64encodedmasterkey';
       const payload = {
         userId,
         encryptedMasterKey: 'encrypted',

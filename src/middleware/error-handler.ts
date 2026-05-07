@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 import { Request, Response, NextFunction } from 'express'
 
-export default (error: any, req: Request, res: Response, next: NextFunction) => {
+export default (error: Error & { code?: number; keyValue?: Record<string, unknown> }, _req: Request, res: Response, _next: NextFunction): void => {
   if (error instanceof mongoose.Error.ValidationError) {
     return res.status(400).json({
       message: 'Validation error',
@@ -18,7 +18,7 @@ export default (error: any, req: Request, res: Response, next: NextFunction) => 
   if (error instanceof mongoose.Error.CastError) {
     return res.status(400).json({ message: `Invalid value for field: ${error.path}` })
   }
-  if (error.code === 11000) {
+  if (error.code === 11000 && error.keyValue) {
     const field = Object.keys(error.keyValue)[0]
     return res.status(409).json({ message: `${field} already exists` })
   }

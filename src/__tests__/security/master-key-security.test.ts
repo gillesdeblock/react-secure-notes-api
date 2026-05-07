@@ -8,7 +8,6 @@ import {
   setupUserMasterKeyEncryption,
   decodeUserMasterKey,
 } from '../../lib/crypto';
-import { createAccessToken, createRefreshToken } from '../../lib/auth';
 import UserModel from '../../models/user';
 import RefreshTokenModel from '../../models/refresh-token';
 
@@ -156,7 +155,7 @@ describe('security: master key security', () => {
 
   describe('master key at rest', () => {
     it('should store master key encrypted in database', async () => {
-      const registerResponse = await request(app).post('/auth/register').send({
+      await request(app).post('/auth/register').send({
         email: `stored-${testEmail}`,
         password: testPassword,
       });
@@ -203,7 +202,7 @@ describe('security: master key security', () => {
     });
 
     it('should not expose master key in error messages', async () => {
-      const registerResponse = await request(app).post('/auth/register').send({
+      await request(app).post('/auth/register').send({
         email: `error-${testEmail}`,
         password: testPassword,
       });
@@ -246,17 +245,16 @@ describe('security: master key security', () => {
 
     it('should prevent cross-user master key access', async () => {
       // Register two users
-      const user1Response = await request(app).post('/auth/register').send({
+      await request(app).post('/auth/register').send({
         email: 'user1@example.com',
         password: 'password1',
       });
 
-      const user2Response = await request(app).post('/auth/register').send({
+      await request(app).post('/auth/register').send({
         email: 'user2@example.com',
         password: 'password2',
       });
 
-      const user1 = await UserModel.findOne({ email: 'user1@example.com' });
       const user2 = await UserModel.findOne({ email: 'user2@example.com' });
 
       // User1 cannot decrypt User2's master key

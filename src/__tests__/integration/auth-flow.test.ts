@@ -310,7 +310,7 @@ describe('integration: auth flow', () => {
 
     it('should revoke old refresh token after refresh', async () => {
       // Refresh once
-      const response = await request(app)
+      await request(app)
         .post('/auth/refresh')
         .set('Cookie', `refresh_token=${refreshToken}`);
 

@@ -158,7 +158,7 @@ describe('crypto', () => {
       const key = crypto.randomBytes(32);
       const iv = crypto.randomBytes(12);
 
-      const { encrypted, authTag } = await encryptAesGcm(plaintext, key, iv);
+      const { encrypted } = await encryptAesGcm(plaintext, key, iv);
       const wrongAuthTag = crypto.randomBytes(16);
 
       await expect(decryptAesGcm(encrypted, wrongAuthTag, key, iv)).rejects.toThrow();

@@ -1,12 +1,10 @@
-import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import {
   encryptAesGcm,
   decryptAesGcm,
-  encryptMasterKey,
-  decryptMasterKey,
   setupUserMasterKeyEncryption,
   decodeUserMasterKey,
 } from '../../lib/crypto';

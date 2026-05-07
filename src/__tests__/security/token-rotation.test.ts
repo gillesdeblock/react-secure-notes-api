@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../../app';
 import UserModel from '../../models/user';
 import RefreshTokenModel from '../../models/refresh-token';
